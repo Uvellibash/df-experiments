@@ -146,8 +146,9 @@ end
 
 trackedItems = trackedItems or {}
 
-function makeServeFoodJob(servant_id, target_building_id)
+function makeServeFoodJob(target_building_id)
   local stack_id = findMeal()
+  if(stack_id == nil) then return end
   --local servant = df.unit.find(servant_id)
   local stack = df.item.find(stack_id)
   local targetBuilding = df.building.find(target_building_id)
@@ -184,6 +185,14 @@ function makeServeFoodJob(servant_id, target_building_id)
   end
 end
 
+function tableIsBeingServed(table_id)
+  for k,t in ipairs(trackedItems) do
+    if(table_id == t.building_id) then
+      return true
+    end
+  end
+  return false
+end
 -- We need to change meal ownership after it makes it's way to the table
 function checkTrackedItems()
   for i=#trackedItems,1,-1 do
@@ -219,6 +228,8 @@ function checkTrackedItems()
   if(#trackedItems>0) then
     print("next check scheduled in 100 ticks. Items tracked count= ",#trackedItems)
     dfhack.timeout(100,'ticks',checkTrackedItems)
+  else
+    trackingInProgress = false
   end
 end
 
@@ -323,10 +334,10 @@ function getAllDiningRooms()
         local emptyTables = {}
         local nonEmptyTables = {}
 
-        if(#o.contained_items < 2) then
-          table.insert(emptyTables,o.id)
-        else
+        if((#o.contained_items > 1) or tableIsBeingServed(o.id)) then
           table.insert(nonEmptyTables,o.id)
+        else
+          table.insert(emptyTables,o.id)
         end
 
         local spouse = df.unit.find(o.owner.relationship_ids.Spouse)
@@ -337,10 +348,10 @@ function getAllDiningRooms()
 
         for k2,o2 in ipairs(o.children) do
           if(df.is_instance( df.building_tablest,o2)) then
-            if(#o2.contained_items < 2) then
-              table.insert(emptyTables,o2.id)
-            else
+            if((#o2.contained_items > 1) or tableIsBeingServed(o2.id)) then
               table.insert(nonEmptyTables,o2.id)
+            else
+              table.insert(emptyTables,o2.id)
             end
           end
         end
@@ -374,13 +385,16 @@ function serveAllTables()
     servingsNeeded = servingsNeeded - #diningRoomInfo.nonEmptyTables
     print('servingsNeeded', servingsNeeded)
     if(servingsNeeded >0 and #diningRoomInfo.emptyTables>0) then
-      makeServeFoodJob(1567,diningRoomInfo.emptyTables[1])
+      makeServeFoodJob(diningRoomInfo.emptyTables[1])
     end
     if(servingsNeeded >1 and #diningRoomInfo.emptyTables>1) then
-      makeServeFoodJob(1567,diningRoomInfo.emptyTables[2])
+      makeServeFoodJob(diningRoomInfo.emptyTables[2])
     end
   end
 end
 
 serveAllTables()
-dfhack.timeout(100,'ticks',checkTrackedItems)
+if (trackingInProgress==nil or trackingInProgress==false) then
+  trackingInProgress = true
+  dfhack.timeout(100,'ticks',checkTrackedItems)
+end
