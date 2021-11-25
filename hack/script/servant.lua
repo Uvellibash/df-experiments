@@ -227,9 +227,9 @@ function checkTrackedItems()
   end
   if(#trackedItems>0) then
     print("next check scheduled in 100 ticks. Items tracked count= ",#trackedItems)
-    dfhack.timeout(100,'ticks',checkTrackedItems)
+    trackingTimeout = dfhack.timeout(100,'ticks',checkTrackedItems)
   else
-    trackingInProgress = false
+    trackingTimeout = nil
   end
 end
 
@@ -394,7 +394,6 @@ function serveAllTables()
 end
 
 serveAllTables()
-if (trackingInProgress==nil or trackingInProgress==false) then
-  trackingInProgress = true
-  dfhack.timeout(100,'ticks',checkTrackedItems)
+if (trackingTimeout==nil or (not dfhack.timeout_active(trackingTimeout))) then
+  trackingTimeout = dfhack.timeout(100,'ticks',checkTrackedItems)
 end
