@@ -1,6 +1,15 @@
 --DON'T RUN THIS SCRIPT IF YOUR SAVEFILE IS DEAR TO YOU
---For experimenting purposes only!
---Once I wrongly copied one pointer and my goose egg roasts became rock block roasts. Who knows what safety check is missing now?
+--For experimenting purposes only! Script is unfinished
+
+--KNOWN BUGS:
+--TODO: If stack of roasts is lying on the floor, separated meals are invisible until haulers pick them
+--TODO: 'TSK' is not showing up when meal is in job
+--THINGS TO CHECK:
+--TODO: Aren't depot jobs get canceled when merchants leave?
+--TODO: What happens if game exit in the middle of the job?
+--THINGS TO IMPROVE:
+--TODO: Assign dwarves food according to their preferences
+
 
 -- Next part is copy-pasted from DFHack's gui.advfort
 -- Credit goes to the authors!
@@ -229,6 +238,7 @@ function checkTrackedItems()
     print("next check scheduled in 100 ticks. Items tracked count= ",#trackedItems)
     trackingTimeout = dfhack.timeout(100,'ticks',checkTrackedItems)
   else
+    print("trackedItems==0")
     trackingTimeout = nil
   end
 end
@@ -368,8 +378,6 @@ for a,b in ipairs(trackedItems) do
   printall(b)
 end
 
-
-
 print("dining Rooms:")
 for a,b in ipairs(diningRooms) do
   printall(b)
@@ -396,4 +404,6 @@ end
 serveAllTables()
 if (trackingTimeout==nil or (not dfhack.timeout_active(trackingTimeout))) then
   trackingTimeout = dfhack.timeout(100,'ticks',checkTrackedItems)
+else
+  print("no timeout needed ", trackingTimeout)
 end
